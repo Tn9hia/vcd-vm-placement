@@ -16,6 +16,7 @@ export-vdc-placement/
 export-vm/
 cloud-hl/
 default-placement/
+NSX_V2T_Migration_Tool/
 
 # File dữ liệu lớn (output/export)
 *.csv
