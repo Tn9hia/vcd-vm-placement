@@ -1,0 +1,7 @@
+# Format: <org-uuid>  <org-name>
+# Danh sách các Organization cần chuẩn hóa placement policy.
+# Lấy org-uuid từ VCloud Director Admin Console.
+#
+# Ví dụ:
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx	VPC-6600001
+yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy	ATM-6600002

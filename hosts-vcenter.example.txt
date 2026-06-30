@@ -1,0 +1,9 @@
+# Format: <host-ip>  <hostname>  <placement-policy-uuid>
+# Mỗi dòng ánh xạ một ESXi host IP với Compute Policy ID trên VCloud Director.
+# Nhiều host có thể dùng chung một policy (cùng cluster).
+#
+# Ví dụ:
+172.16.100.10	AZA-TIER1-CLUSTER01	xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+172.16.100.11	AZA-TIER1-CLUSTER01	xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+172.16.100.20	AZA-TIER2-CLUSTER02	yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy
+172.16.100.21	AZA-TIER2-CLUSTER02	yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy

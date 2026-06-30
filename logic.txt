@@ -1,0 +1,43 @@
+Main steps
+Input(OrgId, ) => get placement policies vm + org => compare (skip => next org/process) 
+
+
+=> update org placement policies (combine placement org and vm) => wait 5s
+=> update vm placement 
+=> Done, move to next org
+
+Details
+Input ?????
+- OrgId
+- host-placement
+
+Get placement policies vm + org
+- Get placement org: getComputePolicies
+- Get placement vm desire:
+	Get vm list: getVM
+	Get placement all vm: getVM
+
+Compare
+- Use output from previous step
+
+update org placement policies
+- Use: updateComputePolicies
+
+update vm placement for each vm
+- Set vm desire placement
+
+
+
+[
+  {
+    "name": "ATM-6600813",
+    "vdcId": "2662f45b-fa09-4001-ab12-a5e238111dfe"  => sai, where is it?????
+  }
+]
+
+e5b00044-56aa-4823-b0d8-f4929a1df0ff       ATM-6600813
+
+
+ae95249f-aafc-415c-a544-9ab0eb4ae0fe    VPC-6600911
+e5b00044-56aa-4823-b0d8-f4929a1df0ff    ATM-6600813
+b2e8ed0f-b820-4efe-b3bf-8103b118d00b    ATM-6600557

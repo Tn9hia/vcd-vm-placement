@@ -1,0 +1,34 @@
+# macOS
+.DS_Store
+
+# Credentials - KHÔNG commit file này
+.env
+
+# Thư mục tạm sinh ra khi chạy tool
+temp/
+
+# Backup files
+*.bk
+*.bak
+
+# Thư mục output của các script export
+export-vdc-placement/
+export-vm/
+cloud-hl/
+default-placement/
+
+# File dữ liệu lớn (output/export)
+*.csv
+*.json
+*.txt
+
+# File input thật chứa dữ liệu nội bộ - KHÔNG commit
+hosts-vcenter.txt
+org-id-input.txt
+
+# Giữ lại file mẫu
+!hosts-vcenter.example.txt
+!org-id-input.example.txt
+
+# Giữ lại logic notes nếu cần
+!logic.txt
