@@ -44,6 +44,7 @@ cp .env.example .env
 
 Nội dung `.env`:
 ```
+BASE_URL=https://your-vcloud-domain.example.com
 VCLOUD_USER=username@system
 VCLOUD_PASS=your_password
 ```

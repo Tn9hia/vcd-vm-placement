@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # ── Config ────────────────────────────────────────────────────────────────────
-BASE_URL='https://cloud2.viettelidc.com.vn'
 TEMP_DIR="./temp"
 HOSTS_FILE="./hosts-vcenter.txt"
 ORG_INPUT="./org-id-input.txt"
@@ -15,13 +14,11 @@ for arg in "$@"; do
 done
 
 # ── Credentials ───────────────────────────────────────────────────────────────
-# Set VCLOUD_USER and VCLOUD_PASS as env vars, or create a .env file:
-#   VCLOUD_USER=nghialt@system
-#   VCLOUD_PASS=your_password
+# Set env vars or create a .env file (see .env.example)
 [ -f ".env" ] && source .env
 
-if [ -z "${VCLOUD_USER:-}" ] || [ -z "${VCLOUD_PASS:-}" ]; then
-  echo "ERROR: VCLOUD_USER and VCLOUD_PASS must be set (env vars or .env file)"
+if [ -z "${VCLOUD_USER:-}" ] || [ -z "${VCLOUD_PASS:-}" ] || [ -z "${BASE_URL:-}" ]; then
+  echo "ERROR: VCLOUD_USER, VCLOUD_PASS, and BASE_URL must be set (env vars or .env file)"
   exit 1
 fi
 
@@ -40,7 +37,7 @@ token=$(curl --request POST \
   --url "$BASE_URL/api/sessions" \
   --header 'accept: application/*+json;version=37.0' \
   --header "authorization: Basic $credentials" -I -s \
-  | grep -i 'authorization' | awk '{print $2}' | tr -d '\r')
+  | grep -i '^x-vcloud-authorization:' | awk '{print $2}' | tr -d '\r')
 
 if [ -z "$token" ]; then
   log "ERROR: Failed to get authentication token. Check credentials."
