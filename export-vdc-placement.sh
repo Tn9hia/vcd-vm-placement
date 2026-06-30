@@ -1,72 +1,75 @@
-#! /bin/bash
+#!/bin/bash
 
-# Declare basic information
-baseURL='https://cloud2.viettelidc.com.vn'
+# ── Credentials ───────────────────────────────────────────────────────────────
+[ -f ".env" ] && source .env
+
+if [ -z "${VCLOUD_USER:-}" ] || [ -z "${VCLOUD_PASS:-}" ] || [ -z "${BASE_URL:-}" ]; then
+  echo "ERROR: VCLOUD_USER, VCLOUD_PASS, and BASE_URL must be set (env vars or .env file)"
+  exit 1
+fi
+
 tempDir="./export-vdc-placement"
-# Create authen token
 
+# ── Auth ──────────────────────────────────────────────────────────────────────
+credentials=$(printf '%s:%s' "$VCLOUD_USER" "$VCLOUD_PASS" | base64)
 token=$(curl --request POST \
-  --url https://cloud2.viettelidc.com.vn/api/sessions \
+  --url "$BASE_URL/api/sessions" \
   --header 'accept: application/*+json;version=37.0' \
-  --header 'authorization: Basic bmdoaWFsdEBzeXN0ZW06TGUwOTAzOTA4Mjg1QA==' -I -s |grep authorization |awk '{print $2}')
+  --header "authorization: Basic $credentials" -I -s \
+  | grep -i '^x-vcloud-authorization:' | awk '{print $2}' | tr -d '\r')
 
-# Create a temp folder to store running data
+if [ -z "$token" ]; then
+  echo "ERROR: Failed to get authentication token. Check credentials."
+  exit 1
+fi
+
 mkdir -p "$tempDir"
 
-# Get org compute policies
+# ── Functions ─────────────────────────────────────────────────────────────────
 getVdcComputePolicies() {
-	local orgId=$1
-	local vdcId=$2
-	local vdcName=$3
+  local orgId=$1
+  local vdcId=$2
+  local vdcName=$3
 
-	# Get org compute policies
-	orgComputePolicies=$(curl --request GET \
-	--url "$baseURL/api/admin/vdc/$vdcId/computePolicies" \
-	--header 'accept: application/*+json;version=37.0' \
-	--header "x-vcloud-authorization: $token" \
-	--header "x-vmware-vcloud-tenant-context: $orgId" -s  | \
-		jq --arg vdcName "$vdcName" '
-		[
-		{
-			vdcName: $vdcName,
-			PlacementReference: [.vdcComputePolicyReference[].name]
-		}
-		]')
-	
-	echo $orgComputePolicies
+  curl --request GET \
+    --url "$BASE_URL/api/admin/vdc/$vdcId/computePolicies" \
+    --header 'accept: application/*+json;version=37.0' \
+    --header "x-vcloud-authorization: $token" \
+    --header "x-vmware-vcloud-tenant-context: $orgId" -s | \
+    jq --arg vdcName "$vdcName" '[{
+      vdcName: $vdcName,
+      PlacementReference: [.vdcComputePolicyReference[].name]
+    }]'
 }
 
-# Get list vdc
 getListVdc() {
-	local orgs=$1
+  local orgId=$1
 
-	listOrgs=$(curl --request GET \
-	--url "$baseURL/api/query?type=orgVdc&page=1&pageSize=100" \
-	--header 'accept: application/*+json;version=37.0' \
-	--header "x-vcloud-authorization: $token" \
-	--header "x-vmware-vcloud-tenant-context: $orgs" -s | \
-	  jq '[.record[] | {"name": .name, "vdcId": (.href | split("/") | last)}]')
-
-	echo $listOrgs
+  curl --request GET \
+    --url "$BASE_URL/api/query?type=orgVdc&page=1&pageSize=100" \
+    --header 'accept: application/*+json;version=37.0' \
+    --header "x-vcloud-authorization: $token" \
+    --header "x-vmware-vcloud-tenant-context: $orgId" -s | \
+    jq '[.record[] | {"name": .name, "vdcId": (.href | split("/") | last)}]'
 }
 
-while read -r line; do 
-	orgId=$(echo $line | awk '{print $1}')
-	orgName=$(echo $line | awk '{print $2}')
-	vdcs=$(getListVdc $orgId)
+# ── Main ──────────────────────────────────────────────────────────────────────
+while read -r line; do
+  orgId=$(echo "$line" | awk '{print $1}')
+  orgName=$(echo "$line" | awk '{print $2}')
+  vdcs=$(getListVdc "$orgId")
 
-	# For each vdc, get vdc compute policies and save to file
-	echo $vdcs | jq -c '.' | while read -r vdc; do
-		vdcName=$(echo "$vdc" | jq -r '.[].name')
-		vdcId=$(echo "$vdc" | jq -r '.[].vdcId')
-		vdcComputePolicies=$(getVdcComputePolicies $orgId $vdcId $vdcName)
-		echo $vdcComputePolicies > "$tempDir/$vdcName-vdc-policy.json"
-		echo "Exported $vdcName-vdc-policy.json"
-	done
+  # FIX: iterate each VDC individually with '.[]'
+  echo "$vdcs" | jq -c '.[]' | while read -r vdc; do
+    vdcName=$(echo "$vdc" | jq -r '.name')
+    vdcId=$(echo "$vdc" | jq -r '.vdcId')
+    vdcComputePolicies=$(getVdcComputePolicies "$orgId" "$vdcId" "$vdcName")
+    echo "$vdcComputePolicies" > "$tempDir/$vdcName-vdc-policy.json"
+    echo "Exported $vdcName-vdc-policy.json"
+  done
 
 done < org-id-input.txt
 
-# Merge org compute policies
-cat $tempDir/*vdc-policy.json | jq -s 'add' > ./merged-policy.json
+cat "$tempDir"/*vdc-policy.json | jq -s 'add' > ./merged-policy.json
 
 echo "Completed export all vdc compute policies"
